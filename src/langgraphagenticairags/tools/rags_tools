@@ -1,0 +1,32 @@
+from langchain_community.document_loaders import WebBaseLoader
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.tools.retriever import create_retriever_tool
+from src.langgraphagenticairags.vectorstore.getfaissretriever import faissretriever
+def get_split_doc():
+    urls=[
+        "https://langchain-ai.github.io/langgraph/tutorials/introduction/",
+        "https://langchain-ai.github.io/langgraph/tutorials/workflows/",
+        "https://langchain-ai.github.io/langgraph/how-tos/map-reduce/"
+    ]
+
+    docs=[WebBaseLoader(url).load() for url in urls]
+
+    docs_list = [item for sublist in docs for item in sublist]
+
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000, chunk_overlap=100
+    )
+
+    doc_splits = text_splitter.split_documents(docs_list)
+    return doc_splits
+
+def get_rag_tool():
+    retriever = faissretriever(get_split_doc())
+    retriever_tool=create_retriever_tool(
+        retriever,
+        "retriever_vector_db_blog",
+        "Search and run information about Langgraph"
+    )
+    return retriever_tool
